@@ -5,7 +5,7 @@ Send & fetch pastes with command line!
 No more ftp, sftp, scp or something else. Just push at server, pull at client, everything is done!  
 And also, share config file, source code, or any other text files to friend is also very easy with paste.py!
 
-Language Support
+Highlight Support
 ----------------
 
 By default, content are pushed with no syntax highlight(syntax: plain text), but you may specify or get from suffix of filename :)
