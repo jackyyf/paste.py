@@ -16,6 +16,7 @@ Supported Pastepad
 ubuntupaste:	http://paste.ubuntu.com/ (Not Blocked in China Mainland)  
 pastebin:		http://pastebin.com/  
 pastie:			http://pastie.org/  
+gist:           https://gist.github.com/ (Login/API Key Required)
 
 Your favorite pastepad is not listed? Open an issue, and I'll add it :)
 
@@ -24,6 +25,8 @@ Dependency
 
 python 2.x:	tested with 2.7.7  
 requests:	tested with 2.3
+colorama:   tested with 0.3.1
 
 You may buy me a beer if you think this project is useful to you :)  
-[![Buy me a beer!](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WV3FHKUWKBESJ)[![请我喝一杯饮料~](https://cdn.jackyyf.me/images/alipay.png)](https://me.alipay.com/jackyyf).
+[![Buy me a beer!](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=67RKC8NB5RQNE)
+[![请我喝一杯饮料~](https://cdn.jackyyf.me/images/alipay.png)](https://me.alipay.com/jackyyf)
