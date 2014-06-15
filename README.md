@@ -24,8 +24,10 @@ Dependency
 ----------
 
 python 2.x:	tested with 2.7.7  
-requests:	tested with 2.3
+requests:	tested with 2.3  
 colorama:   tested with 0.3.1
+
+for python version < 2.7, you may also need argparse module.
 
 You may buy me a beer if you think this project is useful to you :)  
 [![Buy me a beer!](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=67RKC8NB5RQNE)

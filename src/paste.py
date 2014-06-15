@@ -13,13 +13,6 @@ sys.setdefaultencoding('UTF-8')
 del sys.setdefaultencoding
 
 def run():
-	pasterc = os.path.expanduser('~/.pasterc')
-	try:
-		if os.path.isfile(pasterc):
-			with open(pasterc, 'r') as f:
-				pass
-	except OSError, IOError:
-		pass
 	parser = argparse.ArgumentParser(prog='paste.py', description='Push to or pull from paste pads!', conflict_handler='resolve')
 	opt_common = parser.add_argument_group('Common Options')
 	opt_common.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
@@ -37,6 +30,7 @@ def run():
 						 default=True, help='Disable colorful output. Note: colorful is always false if output file is not a terminal.')
 	opt_action = parser.add_subparsers(title='Actions', help='Help message', metavar='action')
 	action_push = opt_action.add_parser('push', help='Push a paste to remote paste pad')
+	action_pull = opt_action.add_parser('pull', help='Pull a paste from remote paste pad')
 	args = parser.parse_args()
 	print args._get_args()
 
