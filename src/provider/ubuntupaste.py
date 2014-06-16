@@ -1,6 +1,7 @@
 import requests
+from . import ProviderBase
 
-class ubuntupaste(object):
+class ubuntupaste(ProviderBase):
 
-	def __init__(self, args):
+	def __init__(self):
 		pass

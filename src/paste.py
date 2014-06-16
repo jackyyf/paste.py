@@ -12,6 +12,8 @@ reload(sys)
 sys.setdefaultencoding('UTF-8')
 del sys.setdefaultencoding
 
+sys.path = [os.path.abspath('.')] + sys.path
+
 def run():
 	parser = argparse.ArgumentParser(prog='paste.py', description='Push to or pull from paste pads!', conflict_handler='resolve')
 	opt_common = parser.add_argument_group('Common Options')
@@ -30,6 +32,11 @@ def run():
 						 default=True, help='Disable colorful output. Note: colorful is always false if output file is not a terminal.')
 	opt_action = parser.add_subparsers(title='Actions', help='Help message', metavar='action')
 	action_push = opt_action.add_parser('push', help='Push a paste to remote paste pad')
+	push_common = action_push.add_argument_group('Common Options')
+	push_common.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
+	push_args	= action_push.add_argument_group('Arguments')
+	push_args.add_argument(metavar='pastebin', dest='push.dest', help='Pastepad you want to paste to.')
+	push_args.add_argument(metavar='file', nargs='?', dest='push.src', help='Local file you want to paste. Use - or ignore it to read from stdin.', default='-')
 	action_pull = opt_action.add_parser('pull', help='Pull a paste from remote paste pad')
 	args = parser.parse_args()
 	print args._get_args()
