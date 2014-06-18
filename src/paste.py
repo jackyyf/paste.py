@@ -3,8 +3,10 @@ _version	= '0.0.1 Alpha'
 import sys
 import os
 import argparse
-from lib import logger
-import ConfigParser
+
+from lib import logger, config
+from common.provider import ProviderBase
+
 
 # Change default encoding to UTF-8
 
@@ -26,20 +28,39 @@ def run():
 						 help='Enable debug output. (VERY VERBOSE!)')
 	opt_log.add_argument('--quiet', '-q', action='store_const', dest='log.level', const=logger.Level.ERROR,
 						 help='Just be quiet, output only error message.')
-	opt_log.add_argument('--simple-log', action='store_const', dest='log.mode', const='{message}',
+	opt_log.add_argument('--simple-log', action='store_const', dest='log.format', const='{message}',
 						 default=None, help='Output just simple message without timestamp, log level etc.')
 	opt_log.add_argument('--no-color', action='store_const', dest='log.colorize', const=False,
 						 default=True, help='Disable colorful output. Note: colorful is always false if output file is not a terminal.')
-	opt_action = parser.add_subparsers(title='Actions', help='Help message', metavar='action')
-	action_push = opt_action.add_parser('push', help='Push a paste to remote paste pad')
+	opt_action = parser.add_subparsers(title='Actions', help='Help message', metavar='action', dest='paste.action')
+	action_push = opt_action.add_parser('push', help='Push a paste to remote paste pad', conflict_handler='resolve')
 	push_common = action_push.add_argument_group('Common Options')
 	push_common.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
-	push_args	= action_push.add_argument_group('Arguments')
-	push_args.add_argument(metavar='pastebin', dest='push.dest', help='Pastepad you want to paste to.')
+	push_args = action_push.add_argument_group('Arguments')
+	push_args.add_argument(metavar='pastepad', dest='push.dest', help='Pastepad you want to paste to.')
 	push_args.add_argument(metavar='file', nargs='?', dest='push.src', help='Local file you want to paste. Use - or ignore it to read from stdin.', default='-')
-	action_pull = opt_action.add_parser('pull', help='Pull a paste from remote paste pad')
+	action_pull = opt_action.add_parser('pull', help='Pull a paste from remote paste pad', conflict_handler='resolve')
+	pull_common = action_pull.add_argument_group('Common Options')
+	pull_common.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
+	pull_args = action_pull.add_argument_group('Arguments')
+	pull_args.add_argument(metavar='uri', dest='pull.dest', help='Pastepad you want to fetch from.')
+	pull_args.add_argument(metavar='file', nargs='?', dest='pull.src', help='Local file you want to store. Use - or ignore it to write to stdout.', default='-')
+	action_fetch = opt_action.add_parser('fetch', help='Fetch http link from paste uri', conflict_handler='resolve')
+	fetch_args = action_fetch.add_argument_group('Arguments')
+	fetch_args.add_argument(metavar='uri', dest='pull.dest', help='Pastepad uri to resolve.')
+	fetch_common = action_fetch.add_argument_group('Common Options')
+	fetch_common.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
+	__import__('providers', globals(), locals())
+	for provider in ProviderBase.__subclasses__():
+		ins = provider()
+		ins.add_push_args(action_push.add_argument_group('Options for ' + provider.__name__))
+		ins.add_pull_args(action_pull.add_argument_group('Options for ' + provider.__name__))
+		ins.add_fetch_args(action_fetch.add_argument_group('Options for ' + provider.__name__))
 	args = parser.parse_args()
-	print args._get_args()
+	conf = config.getConfig()
+	for arg in args._get_kwargs():
+		conf.set(arg[0], arg[1])
+	logger.init(colorize=conf.getboolean('log.colorize'), level=conf.getint('log.level'), log_format=conf.get('log.format'))
 
 if __name__ == '__main__':
 	run()

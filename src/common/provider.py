@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import argparse
+from common import uri, exception
 
 protocols = dict()
 
@@ -9,7 +9,7 @@ class ProviderBase(object):
 	
 	def register_protocol(self, proto_name, ignore_conflict=False):
 		'''
-		:param proto_name: str Protocol prefix for provider wants to register. Eg: 'ubuntu' if you want to handle 'ubuntu:1234567'.
+		:param proto_name: str Protocol prefix for provider wants to register. Eg: 'ubuntu' if you want to handle 'ubuntu:1234567' or 'ubuntu://1234567'.
 							   Allowed characters are [a-zA-Z0-9_\-], note protocol is case INSENSITIVE.
 		:return: None
 		'''
@@ -45,3 +45,27 @@ class ProviderBase(object):
 		:return: None
 		'''
 		raise NotImplementedError('add_pull_args should be implemented!')
+	
+	def add_fetch_args(self, opt):
+		'''
+		Add provider specific argument for fetch action.
+		:param opt: argparse._ArgumentGroup An option group for you to add arguments.
+		:return: None
+		'''
+		raise NotImplementedError('add_fetch_args should be implemented!')	
+	
+	def fetch_http_link(self, uri):
+		'''
+		Resoulve uri to http address.
+		:param uri: str uri with protocol you registered.
+		:return: str http address for the paste.
+		'''
+		raise NotImplementedError('get_http_link should be implemented!')
+	
+def getHandlerClass(_uri):
+	res = uri.parse(_uri)
+	if res == None:
+		raise exception.InvalidURI('Invalid uri: ' + _uri)
+	if res.scheme in protocols:
+		return protocols[res.scheme]
+	raise exception.NoProvider('No provider for scheme: ' + res.scheme)
