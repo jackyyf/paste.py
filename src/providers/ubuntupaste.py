@@ -64,7 +64,7 @@ def _get_language(filename):
 		return _default
 	suffix = filename.rsplit('.', 1)[1]
 	logger.info('filename suffix: ' + suffix)
-	return _languages.get(suffix.lower(), default=_default)
+	return _languages.get(suffix.lower(), _default)
 
 class UbuntuPaste(ProviderBase):
 
