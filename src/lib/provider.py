@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-from common import uri, exception
+from common import exception
+from lib import uri, logger
 
 protocols = dict()
 
@@ -13,6 +14,7 @@ class ProviderBase(object):
 							   Allowed characters are [a-zA-Z0-9_\-], note protocol is case INSENSITIVE.
 		:return: None
 		'''
+		logger.debug('register_protocol: name=%s, provider=%s' % (proto_name, self.__class__.__name__))
 		valid_chars = 'abcdefghijklmnopqrstuvwxyz0123456789_-'
 		if not isinstance(proto_name, (str, unicode)):
 			raise ValueError('proto_name should be a string.')
@@ -25,6 +27,7 @@ class ProviderBase(object):
 		
 		if proto_name in protocols:
 			if ignore_conflict:
+				logger.warn('conflict for protocol %s found, ignored.' % proto_name)
 				return False
 			raise KeyError('proto_name is already registered by %s' % protocols[proto_name].__class__.__name__)
 		
@@ -52,11 +55,27 @@ class ProviderBase(object):
 		:param opt: argparse._ArgumentGroup An option group for you to add arguments.
 		:return: None
 		'''
-		raise NotImplementedError('add_fetch_args should be implemented!')	
+		raise NotImplementedError('add_fetch_args should be implemented!')
+	
+	def push_content(self, content):
+		'''
+		Push content to paste pad.
+		:param content: str content to paste.
+		:return: str uri to paste pad.
+		'''
+		raise NotImplementedError('push_content should be implemented!')
+	
+	def pull_content(self, content):
+		'''
+		Pull content from paste pad.
+		:param content: str content to paste.
+		:return: str content of pastepad.
+		'''
+		raise NotImplementedError('push_content should be implemented!')
 	
 	def fetch_http_link(self, uri):
 		'''
-		Resoulve uri to http address.
+		Resolve uri to http address.
 		:param uri: str uri with protocol you registered.
 		:return: str http address for the paste.
 		'''
@@ -65,7 +84,11 @@ class ProviderBase(object):
 def getHandlerClass(_uri):
 	res = uri.parse(_uri)
 	if res == None:
+		if _uri.lower() in protocols:
+			logger.debug('uri invalid, but provider name found')
+			return protocols[_uri.lower()]
 		raise exception.InvalidURI('Invalid uri: ' + _uri)
+	logger.info('uri validated, protocol: ' + res.scheme)
 	if res.scheme in protocols:
 		return protocols[res.scheme]
 	raise exception.NoProvider('No provider for scheme: ' + res.scheme)

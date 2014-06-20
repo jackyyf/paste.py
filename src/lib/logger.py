@@ -32,6 +32,8 @@ class Color:
 	LCYAN		= Fore.CYAN + Style.DIM
 	LWHITE		= Fore.WHITE + Style.DIM
 	RESET		= Style.RESET_ALL
+	
+_log_queue = []
 
 class _logger:
 
@@ -137,21 +139,41 @@ class _logger:
 _instance = None
 
 def debug(message):
-	_instance._log(Level.DEBUG, message)
+	if _instance is not None:
+		_instance._log(Level.DEBUG, message)
+		return
+	_log_queue.append((Level.DEBUG, message))
 
 def info(message):
-	_instance._log(Level.INFO, message)
+	if _instance is not None:
+		_instance._log(Level.INFO, message)
+		return 
+	_log_queue.append((Level.INFO, message))
 
 def warn(message):
-	_instance._log(Level.WARN, message)
+	if _instance is not None:
+		_instance._log(Level.WARN, message)
+		return 
+	_log_queue.append((Level.WARN, message))
 
 def error(message):
-	_instance._log(Level.ERROR, message)
+	if _instance is not None:
+		_instance._log(Level.ERROR, message)
+		return 
+	_log_queue.append((Level.ERROR, message))
 
 def fatal(message):
-	_instance._log(Level.FATAL, message)
+	if _instance is not None:
+		_instance._log(Level.FATAL, message)
+		return
+	traceback.print_stack()
+	print >>sys.stderr, 'FATAL: ' + message
+	sys.exit(1)
 
 def stackTrace():
+	if _instance is None:
+		traceback.print_stack()
+		return
 	_instance._backTrace()
 
 def setLevel(level):
@@ -163,6 +185,10 @@ def _exceptionHandler(_type, _value, _traceback):
 def init(*args, **kwargs):
 	global _instance
 	if _instance is None:
+		global _log_queue
 		_instance = _logger(*args, **kwargs)
 		sys.excepthook = _exceptionHandler
+		for missed_log in _log_queue:
+			_instance._log(*missed_log)
+		del _log_queue
 

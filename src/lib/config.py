@@ -3,11 +3,12 @@
 
 import ConfigParser
 import os
+import sys
 from common import exception
 
 Raise = object()
 
-class Config(object):
+class FileConfig(object):
 	def __init__(self, filename = None):
 		self.rc = ConfigParser.RawConfigParser()
 		if filename is None:
@@ -58,7 +59,9 @@ class Config(object):
 			
 		
 	def getboolean(self, path, default=None):		
-		val = self.get(path, default).lower()
+		val = self.get(path, default)
+		if val is default:
+			return val
 		
 		if val in ['1', 'yes', 'true', 'on', 'y']:
 			return True
@@ -124,11 +127,43 @@ class Config(object):
 	def saveTo(self, fd):
 		self.rc.write(fd)
 		
+	def dump(self, fd=sys.stderr):
+		for section in self.rc.sections() + ['DEFAULT']:
+			print >>fd, 'Section ' + section
+			for k, v in self.rc.items(section):
+				print >>fd, 'Option %s=%s' % (k, str(v))
+			print >>fd, 'EndSection'
+			print >>fd
+			
+		print >>fd, '===================='
+			
+		
+class RuntimeConfig(FileConfig):
+	
+	def set(self, path, val):
+		if val is None: # Do not change.
+			return
+		try:
+			section, entry = path.rsplit('.', 1)
+		except ValueError:
+			section	= 'DEFAULT'
+			entry	= path
+
+		if section.lower() == 'default':
+			section = 'DEFAULT'
+		if section != 'DEFAULT' and not self.rc.has_section(section):
+			self.rc.add_section(section)
+			
+		self.rc.set(section, entry, val)
+		
+	def saveTo(self, fd):
+		raise NotImplementedError('RuntimeConfig contains not serializable information.')
+		
 			
 _instance = None
 		
 def getConfig():
 	global _instance
 	if _instance is None:
-		_instance = Config()
+		_instance = RuntimeConfig()
 	return _instance
