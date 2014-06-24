@@ -31,7 +31,7 @@ def run():
 						 default=None, help='Output just simple message without timestamp, log level etc.')
 	opt_log.add_argument('--no-color', action='store_const', dest='log.colorize', const=False,
 						 default=True, help='Disable colorful output. Note: colorful is always false if output file is not a terminal.')
-	opt_action = parser.add_subparsers(title='Actions', help='Help message', metavar='action', dest='paste.action')
+	opt_action = parser.add_subparsers(title='Actions', help='===== Help message =====', metavar='action', dest='paste.action')
 	action_push = opt_action.add_parser('push', help='Push a paste to remote paste pad', conflict_handler='resolve')
 	push_common = action_push.add_argument_group('Common Options')
 	push_common.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
