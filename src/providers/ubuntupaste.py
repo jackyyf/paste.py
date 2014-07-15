@@ -92,14 +92,20 @@ class UbuntuPaste(ProviderBase):
 		
 	def add_args(self, opt):
 		opt_action = opt.add_subparsers(title='Actions', metavar='action', dest='action')
-		action_push = opt_action.add_parser('push', help='Push a file to ubuntu paste.')
-		action_push.add_argument('-l', '--language', metavar='language', dest='ubuntupaste.lang',
+		action_push = opt_action.add_parser('push', help='Push a file to ubuntu paste.', add_help=False)
+		push_args = action_push.add_argument_group('Arguments')
+		push_options = action_push.add_argument_group('Options')
+		push_options.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
+		push_options.add_argument('-l', '--language', metavar='language', dest='ubuntupaste.lang',
 						 help='Language for highlight.')
-		action_push.add_argument(metavar='file', nargs='?', dest='src', help='File you want to push, - or ignore to read from stdin.',
+		push_args.add_argument(metavar='file', nargs='?', dest='src', help='File you want to push, - or ignore to read from stdin.',
 								 type=argparse.FileType('r'), default='-')
-		action_pull = opt_action.add_parser('pull', help='Pull a file from ubuntu paste.')
-		action_pull.add_argument(metavar='pasteid', dest='src', help='Paste ID you want to pull from.')
-		action_pull.add_argument(metavar='file', nargs='?', dest='dest', help='Local file you want to store at, - or ignore to write to stdout.',
+		action_pull = opt_action.add_parser('pull', help='Pull a file from ubuntu paste.', add_help=False)
+		pull_args = action_pull.add_argument_group('Arguments')
+		pull_options = action_pull.add_argument_group('Options')
+		pull_options.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
+		pull_args.add_argument(metavar='pasteid', dest='src', help='Paste ID you want to pull from.')
+		pull_args.add_argument(metavar='file', nargs='?', dest='dest', help='Local file you want to store at, - or ignore to write to stdout.',
 								 type=argparse.FileType('w'), default='-')
 		
 	def run(self):

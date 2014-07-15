@@ -13,9 +13,9 @@ class FileConfig(object):
 		self.rc = ConfigParser.RawConfigParser()
 		if filename is None:
 			if os.name == 'posix':
-				filelist = ['/etc/paste.conf', os.path.expanduser('~/.pasteconf'), './.pasteconf']
+				filelist = ['/etc/paste.conf', os.path.expanduser('~/.pasterc')]
 			else:
-				filelist = [os.path.expanduser('~/.pasteconf'), './.pasteconf']
+				filelist = [os.path.expanduser('~/.pasterc')]
 			self.rc.read(filelist)
 		else:
 			if not self.rc.read(filename):
