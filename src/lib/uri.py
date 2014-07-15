@@ -25,10 +25,9 @@ class URIResult:
 		for arg in args:
 			if '=' in arg:
 				k, v = arg.split('=')
+				self.args[urllib.unquote(k)] = urllib.unquote(v)
 			else:
-				k = arg
-				v = True
-			self.args[k] = v
+				self.args[urllib.unquote(arg)] = True
 			
 	def get_arg(self, key, default=None):
 		return self.args.get(key, default)

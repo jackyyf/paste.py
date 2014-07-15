@@ -41,6 +41,9 @@ class FileConfig(object):
 				raise exception.NoSuchOption(e)
 			return default
 		
+	def require(self, path):
+		return self.get(path, default=Raise)
+		
 	def getint(self, path, default=None):
 		try:
 			return int(self.get(path, default))

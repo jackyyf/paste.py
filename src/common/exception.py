@@ -1,20 +1,26 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-class InvalidURI(BaseException):
+class Exception(BaseException):
 	pass
 
-class NoSuchPad(BaseException):
+class InvalidURI(Exception):
 	pass
 
-class ServerException(BaseException):
+class NoSuchPad(Exception):
 	pass
 
-class NoSuchOption(BaseException):
+class ServerException(Exception):
 	pass
 
-class InvalidValue(BaseException):
+class NoSuchOption(Exception):
 	pass
 
-class NoProvider(BaseException):
+class InvalidValue(Exception):
+	pass
+
+class NoProvider(Exception):
+	pass
+
+class DuplicateRegister(Exception):
 	pass
