@@ -1,10 +1,22 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
+_version = (0, 0, 1)
+_name = 'Paste.py'
+
 import ConfigParser
 import os
 import sys
 from common import exception
+
+def version():
+	return '.'.join(map(str, _version))
+
+def version_tuple():
+	return _version[:]
+
+def full_version():
+	return _name + '/' + version()
 
 Raise = object()
 

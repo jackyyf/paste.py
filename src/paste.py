@@ -1,4 +1,4 @@
-_version	= '0.0.1 Alpha'
+_version	= '0.0.1'
 
 import sys
 import os

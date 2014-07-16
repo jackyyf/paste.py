@@ -24,3 +24,6 @@ class NoProvider(Exception):
 
 class DuplicateRegister(Exception):
 	pass
+
+class FileExists(Exception):
+	pass

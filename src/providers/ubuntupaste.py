@@ -1,4 +1,5 @@
 import argparse
+import os
 import requests
 from requests import exceptions
 import sys
@@ -88,6 +89,9 @@ class UbuntuPaste(ProviderBase):
 	def __init__(self):
 		logger.debug('call: ubuntupaste.__init__')
 		self._actions = dict()
+		self.req = requests.Session()
+		logger.debug('http: set user-agent.')
+		self.req.headers['User-Agent'] = config.full_version()
 		super(UbuntuPaste, self).__init__()
 		
 	def add_args(self, opt):
@@ -104,9 +108,11 @@ class UbuntuPaste(ProviderBase):
 		pull_args = action_pull.add_argument_group('Arguments')
 		pull_options = action_pull.add_argument_group('Options')
 		pull_options.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
+		pull_options.add_argument('-f', '--force', action='store_const', dest='overrite', default=False, const=True,
+								  help='Overwrite existing file.')
 		pull_args.add_argument(metavar='pasteid', dest='src', help='Paste ID you want to pull from.')
 		pull_args.add_argument(metavar='file', nargs='?', dest='dest', help='Local file you want to store at, - or ignore to write to stdout.',
-								 type=argparse.FileType('w'), default='-')
+							   default='-')
 		
 	def run(self):
 		global _actions
@@ -179,8 +185,8 @@ class UbuntuPaste(ProviderBase):
 			'content'	: content,
 		}
 		try:
-			resp = requests.post(post_target, data=post_data, allow_redirects=False)
-		except requests.exceptions.RequestException as e:
+			resp = self.req.post(post_target, data=post_data, allow_redirects=False)
+		except exceptions.RequestException as e:
 			logger.info('Exception: ' + e.__class__.__name__)
 			logger.error('Something went wrong when communicating with paste.ubuntu.com!')
 			raise exception.ServerException(e)
@@ -215,6 +221,14 @@ class UbuntuPaste(ProviderBase):
 	def pull_content(self):
 		logger.debug('call: ubuntupaste.pull_content')
 		conf = config.getConfig()
+		fn = conf.require('dest')
+		if fn == '-':
+			fo = sys.stdout
+		else:
+			if os.path.exists(fn):
+				if not conf.get('overwrite', False):
+					raise exception.FileExists('File %s already exists.' % fn)
+			fo = open(fn, 'w')
 		_uri = conf.require('src')
 		res = uri.parse(_uri)
 		if res is None:
@@ -255,8 +269,8 @@ class UbuntuPaste(ProviderBase):
 		
 		# Check if pad exists
 		try:
-			res = requests.get(url)
-		except requests.exceptions.RequestException as e:
+			res = self.req.get(url)
+		except exceptions.RequestException as e:
 			logger.info('Exception: ' + e.__class__.__name__)
 			logger.warn('Something wrong when communicating with paste.ubuntu.com, assume paste pad exists.')
 			return url
@@ -273,7 +287,7 @@ class UbuntuPaste(ProviderBase):
 			content		= self.html2text(self.fetch_between(res.content, start_flag, end_flag))
 			logger.debug('content: %d lines, %d bytes' % (content.count('\n') + 1, len(content)))
 			# return content
-			conf.require('dest').write(content)
+			fo.write(content)
 			return
 		
 		if res.status_code >= 400 and res.status_code < 500:
