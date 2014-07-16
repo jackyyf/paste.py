@@ -14,8 +14,8 @@ Supported Pastepad
 ------------------
 
 ubuntupaste:	http://paste.ubuntu.com/ (Not Blocked in China Mainland)  
-pastebin:		http://pastebin.com/  
-pastie:			http://pastie.org/  
+pastebin:		http://pastebin.com/ (stub)  
+pastie:			http://pastie.org/ (stub)  
 gist:           https://gist.github.com/ (Login/API Key Required)
 
 Your favorite pastepad is not listed? Open an issue, and I'll add it :)
