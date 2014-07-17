@@ -2,6 +2,7 @@
 # -*- encoding: utf-8 -*-
 import argparse
 import getpass
+import json
 import sys
 import datetime
 
@@ -85,10 +86,10 @@ class Gist(ProviderBase):
 		auth_opts.add_argument('-h', '--help', help='Print this help message and exit.', action='help')
 		auth_opts.add_argument('-s', '--system', help='Add to system wide config file (/etc/paste.conf), instead of current user (~/.pasterc)',
 							   action='store_const', dest='global', default=False, const=True)
-		auth_opts.add_argument('-l', '--login', help='Store username/password pair, and login each time you push/pull, instead of oauth token (Not recommended.)',
-							   action='store_const', dest='mode', default='oauth', const='basic')
 		auth_opts.add_argument('-r', '--remove', help='Remove stored authentication information.',
 							   action='store_const', dest='remove', default=False, const=True)
+		auth_opts.add_argument('-f', '--force', help='Force renew token, even if it is still valid.',
+							   action='store_const', dest='force', default=False, const=True)
 	
 	def run(self):
 		global _actions
@@ -111,26 +112,97 @@ class Gist(ProviderBase):
 	@action('auth')
 	def write_auth(self):
 		# TODO: Implements auth
-		pass
+		conf = config.getConfig()
+		fileconf = config.getGlobalConfig() if conf.require('global') else config.getUserConfig()
+		remove = conf.require('remove')
+		if remove:
+			fileconf.remove('gist.auth')
+			fileconf.remove('gist.token')
+			print 'Authentication removed, you may delete the token from your user panel.'
+			return
+		if fileconf.get('gist.auth', False) and not conf.get('force', False):
+			logger.info('check current token')
+			try:
+				token = fileconf.require('gist.token')
+			except exception.NoSuchOption:
+				fileconf.remove('gist.auth')
+				return self.write_auth()
+			result = self._do_auth(check_only=True, token=token)
+			if result:
+				print 'Current token is valid, no auth required.'
+				return
+			print 'Current token is invalid, requesting a new token.'
+		token = self._perform_auth()
+		logger.info('auth ok.')
+		fileconf.set('gist.auth', True)
+		fileconf.set('gist.token', token)
+		logger.debug('saving to config file.')
+		fileconf.save()
 	
-	def _perform_auth(self):
-		user = raw_input('Username: ')
-		logger.debug('user: ' + user)
-		pwd = getpass.getpass('Password: ')
-		logger.debug('password ok.')
+	def _perform_auth(self, otp_token=None):
+		if otp_token is None:
+			try:
+				self.user = raw_input('Username: ')
+				logger.debug('user: ' + self.user)
+				self.pwd = getpass.getpass('Password: ')
+				logger.debug('password ok.')
+			except KeyboardInterrupt:
+				logger.warn('Ctrl-C detected.')
+				sys.exit(1)
+		user = self.user
+		pwd = self.pwd
 		logger.info('auth: fetch new token')
 		post_json = {
-			'scopes' : ['gist'],
-			'note' : 'paste.py @ ' + str(datetime.datetime.now())
+			'scopes'	: ['gist'],
+			'note'		: 'paste.py @ ' + str(datetime.datetime.now()),
+			'note_url'	: 'https://github.com/jackyyf/paste.py',
 		}
+		post_headers = {
+			'Content-Type'	: 'application/json',
+		}
+		if otp_token is not None:
+			post_headers['X-GitHub-OTP'] = otp_token
+		post_str = json.dumps(post_json)
+		logger.debug('post_str: ' + post_str)
+		post_url = _api_base + '/authorizations'
+		logger.debug('post_url: ' + post_url)
+		try:
+			resp = self.req.post(post_url, data=post_str, headers=post_headers, auth=(user, pwd))
+		except exceptions.RequestException as e:
+			raise exception.ServerException(e)
+		logger.info('http ok. response: %d %s' % (resp.status_code, resp.reason))
+		if resp.status_code == 201:
+			logger.info('auth ok.')
+			token = resp.json()[u'token']
+			logger.debug(resp.content)
+			self.req.headers['Authorization'] = 'token ' + token
+			return token
+		elif resp.status_code == 401:
+			# Two factor auth?
+			logger.warn('auth failed')
+			if 'X-GitHub-OTP' in resp.headers:
+				logger.warn('auth: two-factor required')
+				try:
+					token = raw_input('Two factor token from ' + resp.headers['X-Github-OTP'].replace('required; ', '') + ':')
+				except KeyboardInterrupt:
+					logger.warn('Ctrl-C detected')
+					sys.exit(1)
+				return self._perform_auth(otp_token=token)
+			else:
+				logger.error('username or password error.')
+				return self._perform_auth()
+		else:
+			raise exception.ServerException('Server responsed with unknown status: %d %s' % (resp.status_code, resp.reason))
+		
 	
-	def _do_auth(self):
+	def _do_auth(self, check_only=False, token=None):
 		# Authenticate to github, save some login info (user/pass, or oauth token)
 		conf = config.getConfig()
-		auth = conf.getboolean('gist.auth', False)
+		auth = conf.getboolean('gist.auth', False) or token is not None
 		if auth: # User/Pass Pair
 			logger.info('auth: oauth token')
-			token = conf.require('gist.token')
+			if token is None:
+				token = conf.require('gist.token')
 			logger.debug('auth: test token usability')
 			# Try authenticate
 			self.req.headers['Authorization'] = 'token ' + token
@@ -146,12 +218,14 @@ class Gist(ProviderBase):
 				return
 			logger.debug('http ok, response: %d %s' % (resp.status_code, resp.reason))
 			if resp.status_code == 401: # Invalid token
+				if check_only:
+					return False
 				logger.warn('invalid token')
 				self._perform_auth()
-				return
+				return True
 			elif resp.status_code == 200:
 				logger.info('token ok.')
-				return
+				return True
 			else:
 				logger.warn('unknown response status: %d %s' % (resp.status_code, resp.reason))
 				raise exception.ServerException('Server responsed with unknown status: %d %s' % (resp.status_code, resp.reason))

@@ -8,6 +8,7 @@ import ConfigParser
 import os
 import sys
 from common import exception
+from lib import logger
 
 def version():
 	return '.'.join(map(str, _version))
@@ -20,20 +21,24 @@ def full_version():
 
 Raise = object()
 
+_global_filename = '/etc/paste.conf'
+_user_filename = os.path.expanduser('~/.pasterc')
+
 class FileConfig(object):
 	def __init__(self, filename = None):
 		self.rc = ConfigParser.RawConfigParser()
 		if filename is None:
 			if os.name == 'posix':
-				filelist = ['/etc/paste.conf', os.path.expanduser('~/.pasterc')]
+				filelist = [_global_filename, _user_filename]
 			else:
-				filelist = [os.path.expanduser('~/.pasterc')]
+				filelist = [_user_filename]
 			self.rc.read(filelist)
 		else:
-			if not self.rc.read(filename):
-				raise IOError('%s is not readable!' % filename)
+			self.rc.read(filename)
+		self._filename = filename
 		
 	def get(self, path, default=None):
+		logger.debug('config get: ' + path)
 		try:
 			section, entry = path.rsplit('.', 1)
 		except ValueError:
@@ -95,6 +100,7 @@ class FileConfig(object):
 		return dict(self.rc.items(section))
 	
 	def set(self, path, val):
+		logger.debug('config set: %s=%r' % (path, val))
 		if val is None: # Do not change.
 			return
 		try:
@@ -114,11 +120,12 @@ class FileConfig(object):
 		elif isinstance(val, (int, float, long)):
 			self.rc.set(section, entry, str(val))
 		elif isinstance(val, bool):
-			self.rc.set(section, entry, '1')
+			self.rc.set(section, entry, '1' if val else '0')
 		else:
 			raise ValueError('Invalid type for val')
 		
 	def remove(self, path, check=False):
+		logger.debug('remove key: ' + path)
 		try:
 			section, entry = path.rsplit('.', 1)
 		except ValueError:
@@ -141,6 +148,13 @@ class FileConfig(object):
 	
 	def saveTo(self, fd):
 		self.rc.write(fd)
+		
+	def save(self):
+		if not isinstance(self._filename, (str, unicode)):
+			raise ValueError('Invalid filename.')
+		logger.info('saving to ' + self._filename)
+		with open(self._filename, 'w') as f:
+			self.saveTo(f)
 		
 	def dump(self, fd=sys.stderr):
 		for section in self.rc.sections() + ['DEFAULT']:
@@ -176,9 +190,29 @@ class RuntimeConfig(FileConfig):
 		
 			
 _instance = None
+_global_instance = None
+_user_instance = None
 		
 def getConfig():
 	global _instance
 	if _instance is None:
+		logger.debug('creating config instance')
 		_instance = RuntimeConfig()
 	return _instance
+
+def getGlobalConfig():
+	if os.name != 'posix':
+		raise OSError('No global config supported in your platform, currently only posix are supported.')
+	global _global_instance
+	if _global_instance is None:
+		logger.debug('opening global config')
+		_global_instance = FileConfig(_global_filename)
+	return _global_instance
+
+def getUserConfig():
+	global  _user_instance
+	if _user_instance is None:
+		logger.debug('opening user config')
+		_user_instance = FileConfig(_user_filename)
+	return _user_instance
+	
