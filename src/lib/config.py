@@ -32,7 +32,7 @@ class FileConfig(object):
 				filelist = [_global_filename, _user_filename]
 			else:
 				filelist = [_user_filename]
-			self.rc.read(filelist)
+			logger.debug('config loaded: ' + str(self.rc.read(filelist)))
 		else:
 			self.rc.read(filename)
 		self._filename = filename
@@ -80,12 +80,16 @@ class FileConfig(object):
 		
 	def getboolean(self, path, default=None):		
 		val = self.get(path, default)
+		if isinstance(val, bool):
+			return val
 		if val is default:
 			return val
 		
-		if val in ['1', 'yes', 'true', 'on', 'y']:
+		_val = val.lower()
+		
+		if _val in ['1', 'yes', 'true', 'on', 'y']:
 			return True
-		if val in ['0', 'no', 'false', 'off', 'n']:
+		if _val in ['0', 'no', 'false', 'off', 'n']:
 			return False
 		
 		if default is Raise:

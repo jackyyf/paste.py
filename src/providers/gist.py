@@ -3,6 +3,7 @@
 import argparse
 import getpass
 import json
+import os
 import sys
 import datetime
 
@@ -63,13 +64,22 @@ class Gist(ProviderBase):
 
 	def add_args(self, opt):
 		opt_action = opt.add_subparsers(title='Actions', metavar='action', dest='action')
+		opt_opt = opt.add_argument_group('Options')
+		opt_opt.add_argument('-c', '--check', action='store_const', dest='check', default=True, const=True,
+							 help='If stored oauth token is invalid, the process will be interrupted. (Default)')
+		opt_opt.add_argument('-n', '--no-check', action='store_const', dest='check', const=False,
+							 help='Process anonymously if stored oauth token is invalid.')
 		action_push = opt_action.add_parser('push', help='Push one or more file to gist.', add_help=False)
 		push_args = action_push.add_argument_group('Arguments')
 		push_opts = action_push.add_argument_group('Options')
 		push_opts.add_argument('-h', '--help', help='Print this help message and exit.', action='help')
 		push_opts.add_argument('-a', '--anonymous', help='Post gist anonymously.', dest='gist.auth',
 								action='store_const', const=False)
-		push_args.add_argument('src', nargs='*', metavar='files', help='Files to paste to gist, "-" or ignore to read from stdin.',
+		push_opts.add_argument('-p', '--private', help='Hide this gist from search engine.', dest='private',
+							    action='store_const', const=True, default=False)
+		push_opts.add_argument('-d', '--description', help='Add a description for the gist.', dest='description',
+							    default='Gist by paste.py @ ' + str(datetime.datetime.now()), metavar='DESCRIPTION')
+		push_args.add_argument('files', nargs='*', metavar='files', help='Files to paste to gist, "-" or ignore to read from stdin.',
 								type=argparse.FileType('r'), default=[sys.stdin])
 		action_pull = opt_action.add_parser('pull', help='Pull one or more file from gist.', add_help=False)
 		pull_args = action_pull.add_argument_group('Arguments')
@@ -102,12 +112,78 @@ class Gist(ProviderBase):
 	@action('push')
 	def push(self):
 		# TODO: Implements push.
-		pass
+		conf = config.getConfig()
+		res = self._do_auth()
+		if res is not None:
+			if not res:
+				if conf.getboolean('check', True):
+					print 'Token is invalid, please use paste.py gist auth to get a new token.'
+					sys.exit(1)
+				else:
+					del self.req.headers['Authorization']
+		files = conf.require('files')
+		if files.count(sys.stdin) > 1:
+			raise exception.InvalidValue('stdin was listed more than once!')
+		logger.debug('private: ' + ('yes' if conf.require('private') else 'no'))
+		logger.debug('description: ' + conf.require('description'))
+		logger.debug('files: ' + str(len(files)))
+		post_data = {
+			'public'		: not conf.require('private'),
+			'description'	: conf.require('description'),
+		}
+		file_data = dict()
+		try:
+			for file in files:
+				logger.info('reading file ' + file.name)
+				if file is sys.stdin:
+					print 'Type your content here, end with EOF'
+					print 'Use Ctrl-C to interrupt, if you have mistyped something.'
+				content = file.read()
+				logger.debug('file ' + file.name + ': %d lines, %d bytes' % (content.count('\n'), len(content)))
+				fname = os.path.basename(file.name)
+				now = 2
+				if fname in file_data:
+					if '.' in fname:
+						name, ext = fname.rsplit('.', 1)
+					else:
+						name, ext = fname, ''
+					while (name + '-' + str(now) + '.' + ext) in file_data:
+						now += 1
+					fname = (name + '-' + str(now) + '.' + ext)
+				logger.debug('final filename: ' + fname)
+				file_data[fname] = {
+					'content'	: content,
+				}
+		except KeyboardInterrupt:
+			logger.warn('Ctrl-C received, exiting.')
+			sys.exit(1)
+		post_data['files'] = file_data
+		post_str = json.dumps(post_data)
+		post_url = _api_base + '/gists'
+		logger.debug('post url: ' + post_url)
+		try:
+			resp = self.req.post(post_url, data=post_str, headers={
+				'Content-Type'	: 'application/json',
+			})
+		except exceptions.RequestException as e:
+			logger.error('Post error: ' + e.message)
+			raise exception.ServerException(e)
+		logger.debug('http ok.')
+		logger.info('server response: %d %s' % (resp.status_code, resp.reason))
+		if resp.status_code == 201:
+			logger.info('gist created')
+			url = resp.json()[u'html_url']
+			gistid = url.rsplit('/', 1)[1]
+			print 'HTTP Link: ' + url
+			print 'Paste.py uri: gist://' + gistid
+		else:
+			raise exception.ServerException('Server responsed with unknown status: %d %s ' % (resp.status_code, resp.reason))
 	
 	@action('pull')
 	def pull(self):
 		# TODO: Implements pull
-		pass
+		print 'Still a stub :('
+		sys.exit(1)
 	
 	@action('auth')
 	def write_auth(self):
@@ -127,7 +203,7 @@ class Gist(ProviderBase):
 			except exception.NoSuchOption:
 				fileconf.remove('gist.auth')
 				return self.write_auth()
-			result = self._do_auth(check_only=True, token=token)
+			result = self._do_auth(token=token)
 			if result:
 				print 'Current token is valid, no auth required.'
 				return
@@ -138,6 +214,7 @@ class Gist(ProviderBase):
 		fileconf.set('gist.token', token)
 		logger.debug('saving to config file.')
 		fileconf.save()
+		print 'Done!'
 	
 	def _perform_auth(self, otp_token=None):
 		if otp_token is None:
@@ -163,7 +240,6 @@ class Gist(ProviderBase):
 		if otp_token is not None:
 			post_headers['X-GitHub-OTP'] = otp_token
 		post_str = json.dumps(post_json)
-		logger.debug('post_str: ' + post_str)
 		post_url = _api_base + '/authorizations'
 		logger.debug('post_url: ' + post_url)
 		try:
@@ -195,7 +271,7 @@ class Gist(ProviderBase):
 			raise exception.ServerException('Server responsed with unknown status: %d %s' % (resp.status_code, resp.reason))
 		
 	
-	def _do_auth(self, check_only=False, token=None):
+	def _do_auth(self, token=None):
 		# Authenticate to github, save some login info (user/pass, or oauth token)
 		conf = config.getConfig()
 		auth = conf.getboolean('gist.auth', False) or token is not None
@@ -218,11 +294,8 @@ class Gist(ProviderBase):
 				return
 			logger.debug('http ok, response: %d %s' % (resp.status_code, resp.reason))
 			if resp.status_code == 401: # Invalid token
-				if check_only:
-					return False
 				logger.warn('invalid token')
-				self._perform_auth()
-				return True
+				return False
 			elif resp.status_code == 200:
 				logger.info('token ok.')
 				return True
@@ -230,3 +303,4 @@ class Gist(ProviderBase):
 				logger.warn('unknown response status: %d %s' % (resp.status_code, resp.reason))
 				raise exception.ServerException('Server responsed with unknown status: %d %s' % (resp.status_code, resp.reason))
 		logger.info('auth: none')
+		return None
