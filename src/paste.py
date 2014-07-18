@@ -15,10 +15,21 @@ del sys.setdefaultencoding
 
 sys.path = [os.path.abspath('.')] + sys.path
 
+class _Smart_formatter(argparse.HelpFormatter):
+    def _split_lines(self, text, width):
+        # this is the RawTextHelpFormatter._split_lines
+        if '\n' in text:
+            return text.splitlines()
+        return argparse.HelpFormatter._split_lines(self, text, width)
+
 def run():
-	parser = argparse.ArgumentParser(prog='paste.py', description='Push to or pull from paste pads!', conflict_handler='resolve', add_help=False)
+	parser = argparse.ArgumentParser(prog='paste.py', description='Push to or pull from paste pads!',
+                                     conflict_handler='resolve', add_help=False,
+                                     formatter_class=_Smart_formatter)
 	opt_common = parser.add_argument_group('Common Options')
-	opt_common.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
+	opt_common.add_argument('-h', '--help', action='help',
+                            help='Print this help message and exit.\n'
+                            'Use `paste.py provider -h` for specific information.')
 	opt_common.add_argument('-V', '--version', action='version', version='%(prog)s ' + _version)
 	opt_log = parser.add_argument_group('Logging Options')
 	opt_log.add_argument('--verbose', '-v', action='store_const', dest='log.level', const=logger.Level.INFO,
