@@ -2,18 +2,22 @@ paste.py
 ========
 
 Send & fetch pastes with command line!  
-No more ftp, sftp, scp or something else. Just push at server, pull at client, everything is done!  
-And also, share config file, source code, or any other text files to friend is also very easy with paste.py!
+No more ftp, sftp, scp or something else. Just push at server, pull at 
+client, everything is done!  
+And also, share config file, source code, or any other text files to 
+friend is also very easy with paste.py!
 
 Highlight Support
 ----------------
 
-By default, content are pushed with no syntax highlight(syntax: plain text), but you may specify or get from suffix of filename :)
+By default, content are pushed with no syntax highlight(syntax: plain 
+text), but you may specify or get from suffix of filename :)
 
 Supported Pastepad
 ------------------
 
-ubuntupaste:	http://paste.ubuntu.com/ (Not Blocked in China Mainland)  
+ubuntupaste:	http://paste.ubuntu.com/ (Not Blocked in China 
+Mainland)  
 pastebin:		http://pastebin.com/ (stub)  
 pastie:			http://pastie.org/ (stub)  
 gist:           https://gist.github.com/ (Login/API Key Required)
@@ -31,5 +35,7 @@ automodinit:    tested with 0.13
 for python version < 2.7, you may also need argparse module.
 
 You may buy me a beer if you think this project is useful to you :)  
-[![Buy me a beer!](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=67RKC8NB5RQNE)
-[![请我喝一杯饮料~](https://cdn.jackyyf.me/images/alipay.png)](https://me.alipay.com/jackyyf)
+[![Buy me a beer!](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)]
+(https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=67RKC8NB5RQNE)
+[![请我喝一杯饮料~](https://cdn.jackyyf.me/images/alipay.png)]
+(https://me.alipay.com/jackyyf)
