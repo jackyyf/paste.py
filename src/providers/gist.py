@@ -81,7 +81,7 @@ class Gist(ProviderBase):
 							    default='Gist by paste.py @ ' + str(datetime.datetime.now()), metavar='DESCRIPTION')
 		push_args.add_argument('files', nargs='*', metavar='files', help='Files to paste to gist, "-" or ignore to read from stdin.',
 								type=argparse.FileType('r'), default=[sys.stdin])
-		action_pull = opt_action.add_parser('pull', help='Pull one or more file from gist.', add_help=False)
+		action_pull = opt_action.add_parser('pull', help='Pull one or more file from gist. (stub)', add_help=False)
 		pull_args = action_pull.add_argument_group('Arguments')
 		pull_opts = action_pull.add_argument_group('Options')
 		pull_opts.add_argument('-h', '--help', action='help', help='Print this help message and exit.')
