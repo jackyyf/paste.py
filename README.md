@@ -28,7 +28,6 @@ Dependency
 ----------
 
 python 2.x:	    tested with 2.7.7  
-requests:	    tested with 2.3  
 colorama:       tested with 0.3.1  
 automodinit:    tested with 0.13
 

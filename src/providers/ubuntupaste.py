@@ -11,7 +11,7 @@ from lib import logger, uri, config
 import getpass
 import urllib
 import re
-import pyquery
+# import pyquery
 import HTMLParser
 
 # Languages for highlighting!
