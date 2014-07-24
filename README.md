@@ -34,7 +34,6 @@ automodinit:    tested with 0.13
 for python version < 2.7, you may also need argparse module.
 
 You may buy me a beer if you think this project is useful to you :)  
-[![Buy me a beer!](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)]
-(https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=67RKC8NB5RQNE)
-[![请我喝一杯饮料~](https://cdn.jackyyf.me/images/alipay.png)]
-(https://me.alipay.com/jackyyf)
+Paypal: [![Buy me a beer!](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)]
+(https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=67RKC8NB5RQNE)  
+Alipay: 0.0@eve.moe  
