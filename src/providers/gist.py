@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import datetime
+import platform
 
 from lib.provider import ProviderBase
 from common import exception
@@ -111,7 +112,6 @@ class Gist(ProviderBase):
 		
 	@action('push')
 	def push(self):
-		# TODO: Implements push.
 		conf = config.getConfig()
 		res = self._do_auth()
 		if res is not None:
@@ -182,12 +182,12 @@ class Gist(ProviderBase):
 	@action('pull')
 	def pull(self):
 		# TODO: Implements pull
+		conf = config.getConfig()
 		print 'Still a stub :('
 		sys.exit(1)
 	
 	@action('auth')
 	def write_auth(self):
-		# TODO: Implements auth
 		conf = config.getConfig()
 		fileconf = config.getGlobalConfig() if conf.require('global') else config.getUserConfig()
 		remove = conf.require('remove')
@@ -231,7 +231,7 @@ class Gist(ProviderBase):
 		logger.info('auth: fetch new token')
 		post_json = {
 			'scopes'	: ['gist'],
-			'note'		: 'paste.py @ ' + str(datetime.datetime.now()),
+			'note'		: ( '[%s] paste.py @ ' % platform.node() ) + str(datetime.datetime.now()),
 			'note_url'	: 'https://github.com/jackyyf/paste.py',
 		}
 		post_headers = {
